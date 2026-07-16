@@ -289,8 +289,8 @@
       <div id="powerBar" style="display:none; margin-top:6px; font-size:11px; letter-spacing:0.5px; color:#c9973f; font-weight:600;">🧀 BIG POFF <span id="powerTime">10s</span></div>
     </div>
     <div class="score-chip best">
-      <div class="score-label">Best</div>
-      <div class="score-val" id="bestVal">0m</div>
+      <div class="score-label">Points</div>
+      <div class="score-val" id="bestVal">0</div>
       <div id="muteBtn" style="margin-top:8px; font-size:18px; pointer-events:auto; text-align:right; cursor:pointer;">🔊</div>
     </div>
   </div>
@@ -302,10 +302,19 @@
 
   <div id="overlay">
     <h1>AIR POFF ONE</h1>
-    <div class="sub">good dog, try again?</div>
+    <div class="sub">good poff, try again?</div>
     <div id="statBlock"></div>
     <button id="startBtn">Run Again</button>
-    <button class="backBtn" id="overlayHomeBtn">🏠 Home</button>
+    <button class="backBtn" id="overlayHomeBtn"><svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align:-2px; margin-right:4px;"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.5V21h14V9.5"/><path d="M9.5 21v-6h5v6"/></svg>Home</button>
+  </div>
+
+  <div id="welcomeScreen" class="appScreen">
+    <div id="welcomeIcon" style="width:78px; height:78px; border-radius:22px; display:flex; align-items:center; justify-content:center; font-size:34px; background:#1c1f26; margin-bottom:16px; box-shadow: 0 10px 26px rgba(20,20,40,0.2);">🐾</div>
+    <div class="appTitle">Welcome!</div>
+    <div class="appSubtitle">what should we call you?</div>
+    <input class="textInput" id="welcomeUsernameInput" maxlength="16" placeholder="e.g. PoffsPerson" style="margin-top:8px;">
+    <button class="menuBtn primary" id="welcomeContinueBtn" style="margin-top:10px;">Let's Play</button>
+    <div class="lbStatus" id="welcomeStatus">You can change this anytime in Settings.</div>
   </div>
 
   <div id="homeScreen" class="appScreen active">
@@ -321,7 +330,8 @@
 
   <div id="statsScreen" class="appScreen">
     <div class="screenTitle">Stats</div>
-    <div class="statCard"><span class="label">Best altitude</span><span class="value" id="statBest">0m</span></div>
+    <div class="statCard"><span class="label">Best score</span><span class="value" id="statBest">0 pts</span></div>
+    <div class="statCard"><span class="label">Best distance</span><span class="value" id="statBestDistance">0m</span></div>
     <div class="statCard"><span class="label">Runs played</span><span class="value" id="statRuns">0</span></div>
     <div class="statCard"><span class="label">Bones collected</span><span class="value" id="statBones">0</span></div>
     <div class="statCard"><span class="label">Big Poff activations</span><span class="value" id="statCheese">0</span></div>
@@ -330,6 +340,9 @@
 
   <div id="settingsScreen" class="appScreen">
     <div class="screenTitle">Settings</div>
+    <div class="fieldLabel">Your name</div>
+    <input class="textInput" id="settingsUsernameInput" maxlength="16">
+    <button class="menuBtn" id="settingsUsernameSaveBtn" style="margin-bottom:14px;">Save name</button>
     <div class="settingRow">
       <span>Music</span>
       <div class="toggle on" id="musicToggle"><div class="knob"></div></div>
@@ -345,19 +358,11 @@
   <div id="leaderboardScreen" class="appScreen">
     <div class="screenTitle">Leaderboard</div>
 
-    <div id="lbSetup">
-      <div class="fieldLabel">Your name</div>
-      <input class="textInput" id="lbUsernameInput" maxlength="16" placeholder="e.g. PoffsPerson">
-      <button class="menuBtn primary" id="lbConnectBtn" style="margin-top:6px;">Join Leaderboard</button>
-      <div class="lbStatus" id="lbSetupStatus">Scores update automatically while this screen is open.</div>
-    </div>
-
-    <div id="lbView" style="display:none;">
+    <div id="lbView">
       <div class="lbStatus" id="lbTodayLabel">Today's scores</div>
       <div id="lbList"></div>
       <div class="lbStatus" id="lbFetchStatus"></div>
       <button class="menuBtn" id="lbRefreshBtn">↻  Refresh</button>
-      <div class="smallLink" id="lbEditSetup">change name / sheet</div>
     </div>
 
     <button class="backBtn" id="leaderboardBackBtn">Back</button>
@@ -378,6 +383,10 @@
   const powerBar = document.getElementById('powerBar');
   const powerTime = document.getElementById('powerTime');
   const muteBtn = document.getElementById('muteBtn');
+  const welcomeScreen = document.getElementById('welcomeScreen');
+  const welcomeUsernameInput = document.getElementById('welcomeUsernameInput');
+  const welcomeContinueBtn = document.getElementById('welcomeContinueBtn');
+  const welcomeStatus = document.getElementById('welcomeStatus');
   const homeScreen = document.getElementById('homeScreen');
   const statsScreen = document.getElementById('statsScreen');
   const settingsScreen = document.getElementById('settingsScreen');
@@ -389,23 +398,21 @@
   const overlayHomeBtn = document.getElementById('overlayHomeBtn');
   const musicToggle = document.getElementById('musicToggle');
   const sfxToggle = document.getElementById('sfxToggle');
+  const settingsUsernameInput = document.getElementById('settingsUsernameInput');
+  const settingsUsernameSaveBtn = document.getElementById('settingsUsernameSaveBtn');
   const resetStatsBtn = document.getElementById('resetStatsBtn');
   const statBest = document.getElementById('statBest');
+  const statBestDistance = document.getElementById('statBestDistance');
   const statRuns = document.getElementById('statRuns');
   const statBones = document.getElementById('statBones');
   const statCheese = document.getElementById('statCheese');
   const leaderboardBtn = document.getElementById('leaderboardBtn');
   const leaderboardScreen = document.getElementById('leaderboardScreen');
   const leaderboardBackBtn = document.getElementById('leaderboardBackBtn');
-  const lbSetup = document.getElementById('lbSetup');
   const lbView = document.getElementById('lbView');
-  const lbUsernameInput = document.getElementById('lbUsernameInput');
-  const lbConnectBtn = document.getElementById('lbConnectBtn');
-  const lbSetupStatus = document.getElementById('lbSetupStatus');
   const lbList = document.getElementById('lbList');
   const lbFetchStatus = document.getElementById('lbFetchStatus');
   const lbRefreshBtn = document.getElementById('lbRefreshBtn');
-  const lbEditSetup = document.getElementById('lbEditSetup');
 
   let W, H, DPR;
   function resize(){
@@ -423,6 +430,8 @@
 
   let best = 0;
   try { best = parseInt(localStorage.getItem('rooftop_best')||'0',10) || 0; } catch(e) { best = 0; }
+  let bestDistance = 0;
+  try { bestDistance = parseInt(localStorage.getItem('rooftop_best_distance')||'0',10) || 0; } catch(e) { bestDistance = 0; }
 
   let stats = { runs:0, bones:0, cheese:0 };
   try {
@@ -433,7 +442,8 @@
     try { localStorage.setItem('rooftop_stats', JSON.stringify(stats)); } catch(e) {}
   }
   function refreshStatsScreen(){
-    statBest.textContent = best + 'm';
+    statBest.textContent = best + ' pts';
+    statBestDistance.textContent = bestDistance + 'm';
     statRuns.textContent = stats.runs;
     statBones.textContent = stats.bones;
     statCheese.textContent = stats.cheese;
@@ -454,6 +464,7 @@
   let player, platforms, bolts, planes, cheeses, camY, score, running, keys, particles, bgClouds;
   let floatTexts, banners, shakeMag, shakeTime, lastMilestone, bestBeaten, dangerLevel;
   let dangerGradient = null, dangerGradientW = 0, dangerGradientH = 0;
+  let bonePoints = 0, distanceScore = 0;
 
   function rand(a,b){ return a + Math.random()*(b-a); }
 
@@ -482,6 +493,8 @@
     dangerLevel = 0;
     camY = 0;
     score = 0;
+    bonePoints = 0;
+    distanceScore = 0;
     running = true;
     keys = { left:false, right:false };
 
@@ -929,8 +942,10 @@
     const targetCamY = player.y - H*0.55;
     if (targetCamY < camY) camY = targetCamY;
 
-    score = Math.max(score, Math.floor(-camY / 8));
+    distanceScore = Math.max(distanceScore, Math.floor(-camY / 8));
+    score = distanceScore + bonePoints;
     hud.textContent = score + 'm';
+    bestHud.textContent = bonePoints;
 
     const remain = player.bigUntil - Date.now();
     if (remain > 0) {
@@ -978,9 +993,10 @@
         const now = Date.now();
         player.combo = now < player.comboExpire ? player.combo + 1 : 1;
         player.comboExpire = now + 2800;
-        const gained = 25 * Math.min(player.combo, 5);
-        score += gained;
-        spawnFloatText(pl.x, pl.y, '+'+gained + (player.combo>1 ? '  x'+Math.min(player.combo,5) : ''), '#f7ecd4');
+        const gained = big ? 20 : 10;
+        bonePoints += gained;
+        score = distanceScore + bonePoints;
+        spawnFloatText(pl.x, pl.y, '+'+gained, '#f7ecd4');
         playCoinSound();
         triggerShake(2, 6);
         stats.bones++; saveStats();
@@ -1108,22 +1124,27 @@
       best = score;
       try { localStorage.setItem('rooftop_best', String(best)); } catch(e){}
     }
-    bestHud.textContent = best + 'm';
+    if (distanceScore > bestDistance) {
+      bestDistance = distanceScore;
+      try { localStorage.setItem('rooftop_best_distance', String(bestDistance)); } catch(e){}
+    }
     submitScoreToSheet(score);
     showOverlay();
   }
 
   function showOverlay(){
     document.querySelector('#overlay h1').textContent = 'RUN OVER';
-    document.querySelector('#overlay .sub').textContent = 'good dog, try again?';
+    document.querySelector('#overlay .sub').textContent = 'good poff, try again?';
     statBlock.innerHTML =
-      '<div class="stat">This run <b>'+score+'m</b></div>' +
-      '<div class="stat">Best <b>'+best+'m</b></div>';
+      '<div class="stat">Distance <b>'+distanceScore+'m</b></div>' +
+      '<div class="stat">Score <b>'+score+' pts</b></div>' +
+      '<div class="stat">Best distance <b>'+bestDistance+'m</b></div>' +
+      '<div class="stat">Best score <b>'+best+' pts</b></div>';
     overlay.classList.remove('hidden');
   }
 
   function goToScreen(el){
-    [homeScreen, statsScreen, settingsScreen, leaderboardScreen].forEach(s=>s.classList.remove('active'));
+    [welcomeScreen, homeScreen, statsScreen, settingsScreen, leaderboardScreen].forEach(s=>s.classList.remove('active'));
     if (el) el.classList.add('active');
   }
 
@@ -1143,7 +1164,10 @@
   });
   statsBtn.addEventListener('click', ()=>{ refreshStatsScreen(); goToScreen(statsScreen); });
   statsBackBtn.addEventListener('click', ()=> goToScreen(homeScreen));
-  settingsBtn.addEventListener('click', ()=> goToScreen(settingsScreen));
+  settingsBtn.addEventListener('click', ()=>{
+    settingsUsernameInput.value = lbUsername;
+    goToScreen(settingsScreen);
+  });
   settingsBackBtn.addEventListener('click', ()=> goToScreen(homeScreen));
 
   musicToggle.addEventListener('click', ()=>{
@@ -1154,13 +1178,23 @@
     sfxOn = !sfxOn;
     sfxToggle.classList.toggle('on', sfxOn);
   });
+  settingsUsernameSaveBtn.addEventListener('click', ()=>{
+    const name = settingsUsernameInput.value.trim();
+    if (!name) return;
+    lbUsername = name;
+    try { localStorage.setItem('rooftop_username', lbUsername); } catch(e) {}
+    const original = settingsUsernameSaveBtn.textContent;
+    settingsUsernameSaveBtn.textContent = 'Saved!';
+    setTimeout(()=>{ settingsUsernameSaveBtn.textContent = original; }, 1200);
+  });
   resetStatsBtn.addEventListener('click', ()=>{
     if (!confirm('Reset all stats and best score? This can\'t be undone.')) return;
     stats = { runs:0, bones:0, cheese:0 };
     best = 0;
+    bestDistance = 0;
     saveStats();
     try { localStorage.setItem('rooftop_best', '0'); } catch(e){}
-    bestHud.textContent = '0m';
+    try { localStorage.setItem('rooftop_best_distance', '0'); } catch(e){}
     refreshStatsScreen();
   });
 
@@ -1183,16 +1217,8 @@
 
   function showLeaderboardScreen(){
     goToScreen(leaderboardScreen);
-    if (lbUsername) {
-      lbSetup.style.display = 'none';
-      lbView.style.display = 'block';
-      loadLeaderboard();
-      startLbPolling();
-    } else {
-      lbSetup.style.display = 'block';
-      lbView.style.display = 'none';
-      lbUsernameInput.value = lbUsername;
-    }
+    loadLeaderboard();
+    startLbPolling();
   }
 
   function startLbPolling(){
@@ -1205,25 +1231,19 @@
 
   leaderboardBtn.addEventListener('click', showLeaderboardScreen);
   leaderboardBackBtn.addEventListener('click', ()=>{ stopLbPolling(); goToScreen(homeScreen); });
-  lbEditSetup.addEventListener('click', ()=>{
-    stopLbPolling();
-    lbSetup.style.display = 'block';
-    lbView.style.display = 'none';
-    lbUsernameInput.value = lbUsername;
-  });
-
-  lbConnectBtn.addEventListener('click', ()=>{
-    const name = lbUsernameInput.value.trim();
-    if (!name) { lbSetupStatus.textContent = 'Enter a name first.'; return; }
-    lbUsername = name;
-    try { localStorage.setItem('rooftop_username', lbUsername); } catch(e) {}
-    lbSetup.style.display = 'none';
-    lbView.style.display = 'block';
-    loadLeaderboard();
-    startLbPolling();
-  });
 
   lbRefreshBtn.addEventListener('click', loadLeaderboard);
+
+  // ---- welcome / username-first flow ----
+  function completeWelcome(){
+    const name = welcomeUsernameInput.value.trim();
+    if (!name) { welcomeStatus.textContent = 'Enter a name first.'; return; }
+    lbUsername = name;
+    try { localStorage.setItem('rooftop_username', lbUsername); } catch(e) {}
+    goToScreen(homeScreen);
+  }
+  welcomeContinueBtn.addEventListener('click', completeWelcome);
+  welcomeUsernameInput.addEventListener('keydown', e=>{ if (e.key === 'Enter') completeWelcome(); });
 
   let jsonpCounter = 0;
   function jsonpRequest(url, params){
@@ -1267,7 +1287,7 @@
     }
     lbList.innerHTML = leaderboardCache.map((row,i)=>{
       const mine = row.username === lbUsername;
-      return `<div class="lbRow${mine?' me':''}"><span class="lbRank">${i+1}</span><span class="lbName">${escapeHtml(row.username)}</span><span class="lbScore">${row.score}m</span></div>`;
+      return `<div class="lbRow${mine?' me':''}"><span class="lbRank">${i+1}</span><span class="lbName">${escapeHtml(row.username)}</span><span class="lbScore">${row.score} pts</span></div>`;
     }).join('');
   }
 
@@ -1686,12 +1706,11 @@
     requestAnimationFrame(loop);
   }
 
-  bestHud.textContent = best + 'm';
   reset();
   running = false;
   draw();
   overlay.classList.add('hidden');
-  goToScreen(homeScreen);
+  goToScreen(lbUsername ? homeScreen : welcomeScreen);
   requestAnimationFrame(loop);
 })();
 </script>
