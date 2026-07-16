@@ -1217,20 +1217,19 @@
 
     const photoImg = await loadedIconImage();
     const pSize = 380, pCenterX = cw/2, pCenterY = 340;
-    cx.save();
     cx.beginPath();
     cx.arc(pCenterX, pCenterY, pSize/2, 0, Math.PI*2);
     cx.closePath();
-    cx.clip();
     cx.fillStyle = '#ffffff';
-    cx.fillRect(pCenterX - pSize/2, pCenterY - pSize/2, pSize, pSize);
+    cx.fill();
     if (photoImg) {
       const iw = photoImg.naturalWidth, ih = photoImg.naturalHeight;
-      const scale = Math.max(pSize/iw, pSize/ih) * 0.86;
+      // contain-fit within the circle's bounding box so she's never cropped,
+      // with a little padding so she doesn't touch the very edge
+      const scale = Math.min(pSize/iw, pSize/ih) * 0.9;
       const dw = iw*scale, dh = ih*scale;
       cx.drawImage(photoImg, pCenterX - dw/2, pCenterY - dh/2, dw, dh);
     }
-    cx.restore();
     cx.beginPath();
     cx.arc(pCenterX, pCenterY, pSize/2, 0, Math.PI*2);
     cx.lineWidth = 8;
