@@ -911,7 +911,7 @@
   }, {passive:true});
   canvas.addEventListener('touchend', ()=>{ touchStartX=null; keys.left=false; keys.right=false; });
 
-  function update(){
+  function update(dt){
     if (!running) return;
 
     // big-Poff power-up sizing (grows from center, widens landing margin)
@@ -926,16 +926,16 @@
 
     const moveAcc = big ? MOVE_ACC * 1.6 : MOVE_ACC;
     const maxVx = big ? MAX_VX * 1.6 : MAX_VX;
-    if (keys.left) player.vx -= moveAcc;
-    if (keys.right) player.vx += moveAcc;
-    player.vx *= FRICTION;
+    if (keys.left) player.vx -= moveAcc * dt;
+    if (keys.right) player.vx += moveAcc * dt;
+    player.vx *= Math.pow(FRICTION, dt);
     if (player.vx > maxVx) player.vx = maxVx;
     if (player.vx < -maxVx) player.vx = -maxVx;
     if (Math.abs(player.vx) > 0.3) player.facing = player.vx > 0 ? 1 : -1;
 
-    player.vy += GRAV;
-    player.x += player.vx;
-    player.y += player.vy;
+    player.vy += GRAV * dt;
+    player.x += player.vx * dt;
+    player.y += player.vy * dt;
 
     if (player.x < -player.w) player.x = W;
     if (player.x > W) player.x = -player.w;
@@ -960,7 +960,7 @@
     // moving platforms
     for (const p of platforms) {
       if (p.moving) {
-        p.x += p.dir * (1.4 + Math.min(1.4, score/1500));
+        p.x += p.dir * (1.4 + Math.min(1.4, score/1500)) * dt;
         if (p.x < 6 || p.x + p.w > W-6) p.dir *= -1;
       }
     }
@@ -994,7 +994,7 @@
     // lightning bolts move
     let nearestBoltDist = 9999;
     for (const b of bolts) {
-      b.x += b.dir * (1.8 + Math.min(2.0, score/900));
+      b.x += b.dir * (1.8 + Math.min(2.0, score/900)) * dt;
       if (b.x < 4 || b.x + b.w > W-4) b.dir *= -1;
       if (!big) {
         const dist = Math.hypot((player.x+player.w/2)-(b.x+b.w/2), (player.y+player.h/2)-(b.y+b.h/2));
@@ -1770,8 +1770,18 @@
     ctx.closePath();
   }
 
-  function loop(){
-    update();
+  let lastFrameTime = null;
+
+  function loop(timestamp){
+    if (lastFrameTime === null) lastFrameTime = timestamp;
+    // dt = 1.0 means "one ideal 60fps frame's worth of time actually passed".
+    // Clamped so a backgrounded tab / big hiccup doesn't cause a huge catch-up jump.
+    let dt = (timestamp - lastFrameTime) / (1000 / 60);
+    if (!isFinite(dt) || dt <= 0) dt = 1;
+    dt = Math.min(dt, 3);
+    lastFrameTime = timestamp;
+
+    update(dt);
     draw();
     requestAnimationFrame(loop);
   }
