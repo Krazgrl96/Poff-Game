@@ -1189,20 +1189,110 @@
     overlay.classList.add('hidden');
     goToScreen(homeScreen);
   });
+  function loadedIconImage(){
+    return new Promise((resolve)=>{
+      const img = document.getElementById('appIcon');
+      if (img.complete && img.naturalWidth > 0) { resolve(img); return; }
+      img.addEventListener('load', ()=> resolve(img), { once:true });
+      img.addEventListener('error', ()=> resolve(null), { once:true });
+    });
+  }
+
+  async function generateShareCard(){
+    const cw = 1080, ch = 1080;
+    const c = document.createElement('canvas');
+    c.width = cw; c.height = ch;
+    const cx = c.getContext('2d');
+
+    const grad = cx.createLinearGradient(0, 0, 0, ch);
+    grad.addColorStop(0, '#eaf2ff');
+    grad.addColorStop(1, '#ffffff');
+    cx.fillStyle = grad;
+    cx.fillRect(0, 0, cw, ch);
+
+    cx.textAlign = 'center';
+    cx.fillStyle = '#1c1f26';
+    cx.font = '700 56px Georgia, serif';
+    cx.fillText('AIR POFF ONE', cw/2, 130);
+
+    const photoImg = await loadedIconImage();
+    const pSize = 380, pCenterX = cw/2, pCenterY = 340;
+    cx.save();
+    cx.beginPath();
+    cx.arc(pCenterX, pCenterY, pSize/2, 0, Math.PI*2);
+    cx.closePath();
+    cx.clip();
+    cx.fillStyle = '#ffffff';
+    cx.fillRect(pCenterX - pSize/2, pCenterY - pSize/2, pSize, pSize);
+    if (photoImg) {
+      const iw = photoImg.naturalWidth, ih = photoImg.naturalHeight;
+      const scale = Math.max(pSize/iw, pSize/ih) * 0.86;
+      const dw = iw*scale, dh = ih*scale;
+      cx.drawImage(photoImg, pCenterX - dw/2, pCenterY - dh/2, dw, dh);
+    }
+    cx.restore();
+    cx.beginPath();
+    cx.arc(pCenterX, pCenterY, pSize/2, 0, Math.PI*2);
+    cx.lineWidth = 8;
+    cx.strokeStyle = '#ffffff';
+    cx.stroke();
+
+    cx.font = '700 128px Georgia, serif';
+    cx.fillStyle = '#c9973f';
+    cx.fillText(score + ' pts', cw/2, pCenterY + pSize/2 + 170);
+
+    cx.font = '400 36px -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif';
+    cx.fillStyle = '#5a6072';
+    cx.fillText(distanceScore + 'm climbed  \u00B7  ' + bonePoints + ' pts in bones', cw/2, pCenterY + pSize/2 + 230);
+
+    cx.font = '600 42px -apple-system, BlinkMacSystemFont, Helvetica, Arial, sans-serif';
+    cx.fillStyle = '#1c1f26';
+    cx.fillText('Best: ' + best + ' pts \u2014 can you beat me?', cw/2, ch - 90);
+
+    return new Promise(resolve => c.toBlob(resolve, 'image/png'));
+  }
+
   shareRunBtn.addEventListener('click', async ()=>{
     const text = `I just scored ${score} pts as Poff on Air Poff One! 🐾 My best is ${best} pts \u2014 think you can beat it?`;
     const url = /^https?:/.test(location.href) ? location.href : '';
     let shared = false;
-    if (navigator.share) {
+    let blob = null;
+    try { blob = await generateShareCard(); } catch(e) { console.error('Share card generation failed:', e); }
+
+    if (blob) {
+      try {
+        const file = new File([blob], 'air-poff-one-score.png', { type: 'image/png' });
+        if (navigator.canShare && navigator.canShare({ files: [file] })) {
+          await navigator.share({ files: [file], text, ...(url ? { url } : {}) });
+          shared = true;
+        }
+      } catch(e) {
+        if (e && e.name === 'AbortError') { shared = true; }
+        else { console.error('Image share failed, falling back:', e); }
+      }
+    }
+
+    if (!shared && navigator.share) {
       try {
         await navigator.share(url ? { text, url } : { text });
         shared = true;
       } catch(e) {
-        if (e && e.name === 'AbortError') { shared = true; } // user closed the sheet on purpose
-        else { console.error('Share failed, falling back to clipboard:', e); }
+        if (e && e.name === 'AbortError') { shared = true; }
+        else { console.error('Text share failed, falling back to clipboard:', e); }
       }
     }
-    if (!shared) {
+
+    if (!shared && blob) {
+      // last resort: download the image directly and copy the caption text
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'air-poff-one-score.png';
+      link.click();
+      try { await navigator.clipboard.writeText(text + (url ? ('\n' + url) : '')); } catch(e) {}
+      shareStatus.textContent = 'Image saved \u2014 caption copied too!';
+      shared = true;
+      setTimeout(()=>{ shareStatus.textContent = ''; }, 2600);
+    } else if (!shared) {
       try {
         await navigator.clipboard.writeText(text + (url ? ('\n' + url) : ''));
         shareStatus.textContent = 'Copied to clipboard!';
